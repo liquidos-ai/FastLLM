@@ -10,7 +10,7 @@ default-members = ["crates/fastllm"]
 [workspace.package]
 version = "0.0.1"
 edition = "2024"
-license = "Apache-2.0"
+license = "MIT OR Apache-2.0"
 description = "Unified LLM Gateway with Local Models in Rust"
 repository = "https://github.com/liquidos-ai/FastLLM"
 keywords = ["agents", "runtime", "bundles", "LLM"]

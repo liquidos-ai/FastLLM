@@ -1,0 +1,55 @@
+---
+id: index
+title: FastLLM
+slug: /
+description: Rust LLM gateway SDK with provider routing, local model support, scheduling, cache, and retries.
+---
+
+FastLLM is a Rust SDK for routing LLM requests through one gateway. It supports
+cloud providers through `autoagents-llm` and local GGUF models through the
+optional `autoagents-llamacpp` runtime.
+
+The SDK is configured with typed Rust structs. There is no YAML or TOML config
+surface in the current API.
+
+## Core Pieces
+
+- `LlmGateway` is the SDK entry point.
+- `ModelRoute` selects a provider and model.
+- `GatewayConfig` controls scheduling, cache, retry, and local memory budget.
+- `ExecutionScheduler` applies queue limits, per-route concurrency, and
+  request deadlines.
+- `PromptCache` stores completed chat responses with TTL eviction.
+- `RetryPipeline` applies retry and fallback policy.
+- `ModelRegistry` tracks local model residency, TTL, and memory accounting.
+
+## Install
+
+```toml
+[dependencies]
+fastllm = { path = "crates/fastllm" }
+```
+
+Enable local llama.cpp support when needed:
+
+```toml
+[dependencies]
+fastllm = { path = "crates/fastllm", features = ["local"] }
+```
+
+## Start Here
+
+- [Getting Started](./guides/getting-started)
+- [Typed Configuration](./reference/typed-configuration)
+- [Runtime Architecture](./runtime/architecture)
+- [Local Models](./runtime/local-models)
+
+## Examples
+
+- `fastllm-example-hello-world`: OpenAI provider request.
+- `fastllm-example-scheduler-showcase`: scheduler, cache, and telemetry with
+  `EchoProvider`.
+- `fastllm-example-memory-management`: local model memory-budget admission.
+- `fastllm-example-local-model-inference`: single local GGUF model.
+- `fastllm-example-parallel-local-inference`: two local GGUF routes executed
+  concurrently.

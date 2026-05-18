@@ -500,6 +500,40 @@ dependencies = [
 ]
 
 [[package]]
+name = "fastllm-example-local-model-inference"
+version = "0.0.1"
+dependencies = [
+ "fastllm",
+ "serde_json",
+ "tokio",
+]
+
+[[package]]
+name = "fastllm-example-memory-management"
+version = "0.0.1"
+dependencies = [
+ "fastllm",
+ "tokio",
+]
+
+[[package]]
+name = "fastllm-example-parallel-local-inference"
+version = "0.0.1"
+dependencies = [
+ "fastllm",
+ "serde_json",
+ "tokio",
+]
+
+[[package]]
+name = "fastllm-example-scheduler-showcase"
+version = "0.0.1"
+dependencies = [
+ "fastllm",
+ "tokio",
+]
+
+[[package]]
 name = "find-msvc-tools"
 version = "0.1.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"

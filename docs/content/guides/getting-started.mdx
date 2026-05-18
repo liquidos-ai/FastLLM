@@ -1,0 +1,77 @@
+---
+id: getting-started
+title: Getting Started
+description: Register a provider and send a chat request through FastLLM.
+---
+
+## Cloud Provider
+
+FastLLM uses `autoagents-llm` providers behind `LlmGateway`.
+
+```rust
+use fastllm::{LlmGateway, LlmMessage, LlmRequest, ModelRoute, ProviderConfig};
+
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let gateway = LlmGateway::new();
+    gateway.register_provider_config(ProviderConfig::from_env("openai", "gpt-4o-mini"))?;
+
+    let response = gateway
+        .chat(LlmRequest::new(
+            ModelRoute::new("openai", "gpt-4o-mini"),
+            vec![LlmMessage::user("What is the capital of France?")],
+        ))
+        .await?;
+
+    println!("{}", response.text);
+    Ok(())
+}
+```
+
+Run the included example:
+
+```bash
+OPENAI_API_KEY=sk-... cargo run -p fastllm-example-hello-world
+```
+
+## Request Options
+
+`LlmRequest` carries routing and scheduling metadata:
+
+- `route`: provider and model.
+- `request_id`: optional ID used in deadline errors.
+- `deadline_ms`: per-request scheduler timeout.
+- `priority`: reserved for scheduler ordering.
+- `cache`: enables or disables prompt-cache lookup for the request.
+- `parameters`: output-affecting parameters included in the cache key.
+- `provider_parameters`: provider-only metadata excluded from the cache key.
+
+## Local Provider
+
+Local llama.cpp support is feature-gated:
+
+```bash
+cargo test --workspace --all-targets --features local
+```
+
+Use `register_llamacpp_model` with a `ModelConfig` that includes `model_path`
+when the `local` feature is enabled.
+
+Run the local examples with the default Hugging Face GGUF model:
+
+```bash
+cargo run -p fastllm-example-local-model-inference
+
+cargo run -p fastllm-example-parallel-local-inference
+```
+
+The default is `unsloth/Qwen3.5-9B-GGUF` with
+`Qwen3.5-9B-Q4_0.gguf`. Set `FASTLLM_GGUF_MODEL`,
+`FASTLLM_GGUF_MODEL_A`, or `FASTLLM_GGUF_MODEL_B` to use local files.
+
+Run SDK behavior examples without external services:
+
+```bash
+cargo run -p fastllm-example-scheduler-showcase
+cargo run -p fastllm-example-memory-management
+```

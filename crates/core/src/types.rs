@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::collections::BTreeMap;
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord)]
 pub struct ModelRoute {
     pub provider: String,
     pub model: String,
@@ -26,11 +26,57 @@ pub struct LlmRequest {
     pub route: ModelRoute,
     pub messages: Vec<LlmMessage>,
     #[serde(default)]
+    pub request_id: Option<String>,
+    #[serde(default)]
+    pub deadline_ms: Option<u64>,
+    #[serde(default)]
+    pub priority: u8,
+    #[serde(default = "default_cacheable")]
+    pub cache: bool,
+    #[serde(default)]
     pub tools: Vec<LlmTool>,
     #[serde(default)]
     pub output_schema: Option<Value>,
     #[serde(default)]
     pub parameters: BTreeMap<String, Value>,
+    #[serde(default)]
+    pub provider_parameters: BTreeMap<String, Value>,
+}
+
+impl LlmRequest {
+    pub fn new(route: ModelRoute, messages: Vec<LlmMessage>) -> Self {
+        Self {
+            route,
+            messages,
+            request_id: None,
+            deadline_ms: None,
+            priority: 0,
+            cache: true,
+            tools: Vec::new(),
+            output_schema: None,
+            parameters: BTreeMap::new(),
+            provider_parameters: BTreeMap::new(),
+        }
+    }
+
+    pub fn with_request_id(mut self, request_id: impl Into<String>) -> Self {
+        self.request_id = Some(request_id.into());
+        self
+    }
+
+    pub fn with_deadline_ms(mut self, deadline_ms: u64) -> Self {
+        self.deadline_ms = Some(deadline_ms);
+        self
+    }
+
+    pub fn with_priority(mut self, priority: u8) -> Self {
+        self.priority = priority;
+        self
+    }
+}
+
+fn default_cacheable() -> bool {
+    true
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
@@ -98,4 +144,45 @@ pub struct ModelLoadRequest {
 pub struct ModelInfo {
     pub route: ModelRoute,
     pub loaded: bool,
+    pub state: ModelState,
+    pub memory_bytes: u64,
+    pub kv_cache_bytes: u64,
+    #[serde(default)]
+    pub device: Option<String>,
+    #[serde(default)]
+    pub expires_at_ms: Option<u64>,
+    pub load_reason: ModelLoadReason,
+}
+
+impl ModelInfo {
+    pub fn unloaded(route: ModelRoute) -> Self {
+        Self {
+            route,
+            loaded: false,
+            state: ModelState::Unloaded,
+            memory_bytes: 0,
+            kv_cache_bytes: 0,
+            device: None,
+            expires_at_ms: None,
+            load_reason: ModelLoadReason::Explicit,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "snake_case")]
+pub enum ModelState {
+    Unloaded,
+    Loading,
+    Loaded,
+    Evicting,
+}
+
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "snake_case")]
+pub enum ModelLoadReason {
+    Explicit,
+    OnDemand,
+    Retry,
+    MemoryPressure,
 }

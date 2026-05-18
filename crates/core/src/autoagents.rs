@@ -5,7 +5,7 @@ use serde_json::Value;
 use std::sync::Arc;
 
 #[derive(Debug, Clone, Default, PartialEq)]
-pub struct AutoagentsProviderConfig {
+pub struct ProviderConfig {
     pub provider: String,
     pub model: Option<String>,
     pub api_key: Option<String>,
@@ -24,7 +24,7 @@ pub struct AutoagentsProviderConfig {
     pub deployment_id: Option<String>,
 }
 
-impl AutoagentsProviderConfig {
+impl ProviderConfig {
     pub fn new(provider: impl Into<String>) -> Self {
         Self {
             provider: provider.into(),
@@ -108,9 +108,7 @@ impl AutoagentsProviderConfig {
     }
 }
 
-pub fn build_autoagents_provider(
-    config: AutoagentsProviderConfig,
-) -> Result<Arc<dyn LlmProvider>, LlmGatewayError> {
+pub fn build_provider(config: ProviderConfig) -> Result<Arc<dyn LlmProvider>, LlmGatewayError> {
     match config.provider.as_str() {
         "openai" => build::<autoagents_llm::backends::openai::OpenAI>(config),
         "anthropic" => build::<autoagents_llm::backends::anthropic::Anthropic>(config),
@@ -127,7 +125,7 @@ pub fn build_autoagents_provider(
     }
 }
 
-fn build<T>(config: AutoagentsProviderConfig) -> Result<Arc<dyn LlmProvider>, LlmGatewayError>
+fn build<T>(config: ProviderConfig) -> Result<Arc<dyn LlmProvider>, LlmGatewayError>
 where
     T: autoagents_llm::LLMProvider + autoagents_llm::HasConfig,
     LLMBuilder<T>: BuildAutoagentsProvider<T>,
@@ -141,7 +139,7 @@ where
     })
 }
 
-fn apply_common<T>(config: AutoagentsProviderConfig) -> LLMBuilder<T>
+fn apply_common<T>(config: ProviderConfig) -> LLMBuilder<T>
 where
     T: autoagents_llm::LLMProvider + autoagents_llm::HasConfig,
 {
@@ -235,7 +233,7 @@ mod tests {
 
     #[test]
     fn unsupported_provider_is_error() {
-        let err = match build_autoagents_provider(AutoagentsProviderConfig::new("missing")) {
+        let err = match build_provider(ProviderConfig::new("missing")) {
             Ok(_) => panic!("unknown provider should fail"),
             Err(err) => err,
         };
@@ -245,7 +243,7 @@ mod tests {
 
     #[test]
     fn provider_build_errors_are_preserved() {
-        let err = match build_autoagents_provider(AutoagentsProviderConfig::new("openai")) {
+        let err = match build_provider(ProviderConfig::new("openai")) {
             Ok(_) => panic!("missing key should fail"),
             Err(err) => err,
         };
@@ -256,78 +254,78 @@ mod tests {
     #[test]
     fn configured_autoagents_providers_build_without_network() {
         let cases = [
-            AutoagentsProviderConfig {
+            ProviderConfig {
                 provider: "openai".to_string(),
                 api_key: Some("test".to_string()),
                 model: Some("gpt-test".to_string()),
-                ..AutoagentsProviderConfig::default()
+                ..ProviderConfig::default()
             },
-            AutoagentsProviderConfig {
+            ProviderConfig {
                 provider: "anthropic".to_string(),
                 api_key: Some("test".to_string()),
                 model: Some("claude-test".to_string()),
-                ..AutoagentsProviderConfig::default()
+                ..ProviderConfig::default()
             },
-            AutoagentsProviderConfig {
+            ProviderConfig {
                 provider: "ollama".to_string(),
                 base_url: Some("http://localhost:11434".to_string()),
                 model: Some("llama-test".to_string()),
-                ..AutoagentsProviderConfig::default()
+                ..ProviderConfig::default()
             },
-            AutoagentsProviderConfig {
+            ProviderConfig {
                 provider: "deepseek".to_string(),
                 api_key: Some("test".to_string()),
                 model: Some("deepseek-test".to_string()),
-                ..AutoagentsProviderConfig::default()
+                ..ProviderConfig::default()
             },
-            AutoagentsProviderConfig {
+            ProviderConfig {
                 provider: "xai".to_string(),
                 api_key: Some("test".to_string()),
                 model: Some("grok-test".to_string()),
-                ..AutoagentsProviderConfig::default()
+                ..ProviderConfig::default()
             },
-            AutoagentsProviderConfig {
+            ProviderConfig {
                 provider: "phind".to_string(),
                 model: Some("phind-test".to_string()),
-                ..AutoagentsProviderConfig::default()
+                ..ProviderConfig::default()
             },
-            AutoagentsProviderConfig {
+            ProviderConfig {
                 provider: "google".to_string(),
                 api_key: Some("test".to_string()),
                 model: Some("gemini-test".to_string()),
-                ..AutoagentsProviderConfig::default()
+                ..ProviderConfig::default()
             },
-            AutoagentsProviderConfig {
+            ProviderConfig {
                 provider: "groq".to_string(),
                 api_key: Some("test".to_string()),
                 model: Some("llama-test".to_string()),
-                ..AutoagentsProviderConfig::default()
+                ..ProviderConfig::default()
             },
-            AutoagentsProviderConfig {
+            ProviderConfig {
                 provider: "azure-openai".to_string(),
                 api_key: Some("test".to_string()),
                 base_url: Some("https://example.test".to_string()),
                 api_version: Some("2024-02-01".to_string()),
                 deployment_id: Some("deployment".to_string()),
                 model: Some("gpt-test".to_string()),
-                ..AutoagentsProviderConfig::default()
+                ..ProviderConfig::default()
             },
-            AutoagentsProviderConfig {
+            ProviderConfig {
                 provider: "openrouter".to_string(),
                 api_key: Some("test".to_string()),
                 model: Some("openrouter-test".to_string()),
-                ..AutoagentsProviderConfig::default()
+                ..ProviderConfig::default()
             },
-            AutoagentsProviderConfig {
+            ProviderConfig {
                 provider: "minimax".to_string(),
                 api_key: Some("test".to_string()),
                 model: Some("minimax-test".to_string()),
-                ..AutoagentsProviderConfig::default()
+                ..ProviderConfig::default()
             },
         ];
 
         for config in cases {
-            build_autoagents_provider(config).expect("provider builds");
+            build_provider(config).expect("provider builds");
         }
     }
 }

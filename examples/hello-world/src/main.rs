@@ -1,5 +1,4 @@
-use fastllm::{AutoagentsProviderConfig, LlmGateway, LlmMessage, LlmRequest, ModelRoute};
-use std::collections::BTreeMap;
+use fastllm::{LlmGateway, LlmMessage, LlmRequest, ModelRoute, ProviderConfig};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -9,17 +8,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         return Err("set OPENAI_API_KEY before running this example".into());
     }
 
-    let mut gateway = LlmGateway::new();
-    gateway.register_autoagents_provider(AutoagentsProviderConfig::from_env("openai", &model))?;
+    let gateway = LlmGateway::new();
+    gateway.register_provider_config(ProviderConfig::from_env("openai", &model))?;
 
     let response = gateway
-        .chat(LlmRequest {
-            route: ModelRoute::new("openai", model),
-            messages: vec![LlmMessage::user("What is the capital of France?")],
-            tools: Vec::new(),
-            output_schema: None,
-            parameters: BTreeMap::new(),
-        })
+        .chat(LlmRequest::new(
+            ModelRoute::new("openai", model),
+            vec![LlmMessage::user("What is the capital of France?")],
+        ))
         .await?;
 
     println!("{}", response.text);

@@ -1,0 +1,76 @@
+---
+id: local-models
+title: Local Models
+description: Local model registration, memory accounting, TTL residency, slots, and KV cache metadata.
+---
+
+Local model support is enabled with the `local` feature and backed by
+`autoagents-llamacpp`.
+
+```rust
+use fastllm::{GatewayConfig, LlmGateway, ModelConfig, ModelRoute, RuntimeKind};
+
+let route = ModelRoute::new("local", "llama");
+let gateway = LlmGateway::builder()
+    .config(GatewayConfig {
+        local_memory_budget_bytes: 16 * 1024 * 1024 * 1024,
+        ..GatewayConfig::default()
+    })
+    .build();
+
+gateway.register_llamacpp_model(ModelConfig {
+    route,
+    runtime: RuntimeKind::Local,
+    parameters: std::collections::BTreeMap::from([
+        (
+            "huggingface_repo_id".to_string(),
+            serde_json::json!("unsloth/Qwen3.5-9B-GGUF"),
+        ),
+        (
+            "huggingface_filename".to_string(),
+            serde_json::json!("Qwen3.5-9B-Q4_0.gguf"),
+        ),
+        ("max_tokens".to_string(), serde_json::json!(256)),
+        ("temperature".to_string(), serde_json::json!(0.7)),
+    ]),
+    memory_bytes: 8 * 1024 * 1024 * 1024,
+    kv_cache_bytes: 2 * 1024 * 1024 * 1024,
+    max_parallel_sequences: 4,
+    ttl_seconds: 600,
+    ..ModelConfig::default()
+});
+```
+
+Set `model_path` instead of the Hugging Face parameters to load a local GGUF
+file directly.
+
+## Model Residency
+
+`ModelRegistry` tracks configured models, loaded state, memory footprint,
+KV-cache footprint, device label, last use, and TTL expiry.
+
+`load_model` reserves memory and records `ModelInfo`. Requests can also load a
+configured local model on demand.
+
+## Memory
+
+`MemoryManager` rejects a model load when `memory_bytes + kv_cache_bytes`
+exceeds the configured local memory budget.
+
+## Parallel Slots
+
+`InferenceSlots` models per-route sequence slots with these states:
+
+- `Idle`
+- `Prefill`
+- `Decode`
+- `Done`
+
+The current slot manager is metadata for admission and scheduling. Actual
+llama.cpp batching remains inside `autoagents-llamacpp`.
+
+## KV Cache Metadata
+
+`KvCacheManager` records route-scoped prefix hashes. It is intentionally narrow:
+it tracks cache eligibility metadata without pretending to own llama.cpp's
+internal KV cache.

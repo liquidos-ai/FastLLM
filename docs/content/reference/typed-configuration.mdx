@@ -1,0 +1,63 @@
+---
+id: typed-configuration
+title: Typed Configuration
+description: Configure FastLLM with Rust structs.
+---
+
+FastLLM configuration is typed Rust API. The SDK does not currently load YAML
+or TOML config files.
+
+```rust
+use fastllm::{
+    CacheConfig, GatewayConfig, LlmGateway, ModelConfig, ModelRoute, RetryConfig,
+    RuntimeKind, SchedulerConfig,
+};
+
+let route = ModelRoute::new("local", "llama");
+
+let config = GatewayConfig {
+    scheduler: SchedulerConfig {
+        max_queue_depth: 1024,
+        max_concurrent_tasks: 64,
+        per_route_concurrency: 4,
+        default_deadline_ms: 120_000,
+    },
+    cache: CacheConfig {
+        enabled: true,
+        ttl_seconds: 300,
+        max_entries: 4096,
+    },
+    retry: RetryConfig {
+        max_attempts: 2,
+        initial_backoff_ms: 25,
+        max_backoff_ms: 1_000,
+        ..RetryConfig::default()
+    },
+    local_memory_budget_bytes: 24 * 1024 * 1024 * 1024,
+    ..GatewayConfig::default()
+}
+.with_model(ModelConfig {
+    route,
+    runtime: RuntimeKind::Local,
+    model_path: Some("/models/llama.gguf".to_string()),
+    memory_bytes: 8 * 1024 * 1024 * 1024,
+    kv_cache_bytes: 2 * 1024 * 1024 * 1024,
+    max_parallel_sequences: 4,
+    ttl_seconds: 600,
+    ..ModelConfig::default()
+});
+
+let gateway = LlmGateway::builder().config(config).build();
+```
+
+## Important Fields
+
+- `SchedulerConfig`: queue depth, global concurrency, per-route concurrency,
+  and default deadline.
+- `CacheConfig`: cache enablement, TTL, and maximum entries.
+- `RetryConfig`: retry attempts, backoff bounds, provider-error retry behavior,
+  and fallback routes.
+- `ModelConfig`: model route, runtime kind, local model path, memory estimate,
+  KV-cache estimate, parallel sequence count, and model TTL.
+- `local_memory_budget_bytes`: total memory budget used by local model
+  admission.
