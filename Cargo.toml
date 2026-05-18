@@ -8,7 +8,7 @@ members = [
 default-members = ["crates/core"]
 
 [workspace.package]
-version = "0.1.0"
+version = "0.0.1"
 edition = "2024"
 license = "Apache-2.0"
 description = "Unified LLM Gateway with Local Models in Rust"
@@ -18,7 +18,7 @@ categories = []
 readme = "README.md"
 
 [workspace.dependencies]
-fastllm-core = { path = "crates/core", version = "0.1.0" }
+fastllm-core = { path = "crates/core", version = "0.0.1" }
 
 autoagents-llm = { git = "https://github.com/liquidos-ai/AutoAgents" }
 autoagents-protocol = { git = "https://github.com/liquidos-ai/AutoAgents" }
