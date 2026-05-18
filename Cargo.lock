@@ -342,7 +342,7 @@ dependencies = [
 
 [[package]]
 name = "fastllm-core"
-version = "0.1.0"
+version = "0.0.1"
 dependencies = [
  "async-trait",
  "autoagents-llm",
@@ -354,7 +354,7 @@ dependencies = [
 
 [[package]]
 name = "fastllm-example-hello-world"
-version = "0.1.0"
+version = "0.0.1"
 dependencies = [
  "fastllm-core",
  "tokio",
