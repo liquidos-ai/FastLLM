@@ -99,12 +99,21 @@ mod tests {
         let route = ModelRoute::new("local", "model");
 
         telemetry.record_cache_hit(&route);
+        telemetry.record_cache_miss(&route);
+        telemetry.record_scheduled_task(&route);
+        telemetry.record_queue_rejection();
         telemetry.record_retry_attempt(&route);
         telemetry.record_model_load(&route);
+        telemetry.record_model_unload(&route);
 
         let snapshot = telemetry.snapshot();
         assert_eq!(snapshot.cache_hits, 1);
+        assert_eq!(snapshot.cache_misses, 1);
+        assert_eq!(snapshot.scheduled_tasks, 1);
+        assert_eq!(snapshot.queue_rejections, 1);
         assert_eq!(snapshot.retry_attempts, 1);
         assert_eq!(snapshot.model_loads, 1);
+        assert_eq!(snapshot.model_unloads, 1);
+        assert_eq!(telemetry.metrics().snapshot(), snapshot);
     }
 }

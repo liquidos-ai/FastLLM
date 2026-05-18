@@ -252,6 +252,91 @@ mod tests {
     }
 
     #[test]
+    fn provider_config_merges_model_options_from_json() {
+        let config = ProviderConfig {
+            max_tokens: Some(64),
+            temperature: Some(0.1),
+            reasoning_effort: Some("low".to_string()),
+            ..ProviderConfig::new("openai")
+        }
+        .with_model_config(Some(&serde_json::json!({
+            "max_tokens": 128,
+            "temperature": 0.2,
+            "timeout_seconds": 30,
+            "reasoning": true,
+            "reasoning_effort": "high",
+            "reasoning_budget_tokens": 512,
+            "top_p": 0.9,
+            "top_k": 40,
+            "normalize_response": true,
+            "extra_body": { "metadata": "demo" },
+            "api_version": "2024-02-01",
+            "deployment_id": "deployment"
+        })));
+
+        assert_eq!(config.max_tokens, Some(128));
+        assert_eq!(config.temperature, Some(0.2));
+        assert_eq!(config.timeout_seconds, Some(30));
+        assert_eq!(config.reasoning, Some(true));
+        assert_eq!(config.reasoning_effort.as_deref(), Some("high"));
+        assert_eq!(config.reasoning_budget_tokens, Some(512));
+        assert_eq!(config.top_p, Some(0.9));
+        assert_eq!(config.top_k, Some(40));
+        assert_eq!(config.normalize_response, Some(true));
+        assert_eq!(
+            config
+                .extra_body
+                .as_ref()
+                .and_then(|value| value.get("metadata")),
+            Some(&serde_json::json!("demo"))
+        );
+        assert_eq!(config.api_version.as_deref(), Some("2024-02-01"));
+        assert_eq!(config.deployment_id.as_deref(), Some("deployment"));
+    }
+
+    #[test]
+    fn provider_config_ignores_missing_or_invalid_model_config() {
+        let base = ProviderConfig {
+            max_tokens: Some(64),
+            reasoning_effort: Some("unsupported".to_string()),
+            ..ProviderConfig::new("openai")
+        };
+
+        assert_eq!(base.clone().with_model_config(None), base);
+        assert_eq!(
+            base.clone()
+                .with_model_config(Some(&serde_json::json!("not-object"))),
+            base
+        );
+
+        let _builder = apply_common::<autoagents_llm::backends::openai::OpenAI>(base);
+    }
+
+    #[test]
+    fn provider_builder_accepts_all_common_options() {
+        let config = ProviderConfig {
+            provider: "openai".to_string(),
+            model: Some("gpt-test".to_string()),
+            api_key: Some("test".to_string()),
+            base_url: Some("https://example.test".to_string()),
+            max_tokens: Some(128),
+            temperature: Some(0.3),
+            timeout_seconds: Some(30),
+            reasoning: Some(true),
+            reasoning_effort: Some("medium".to_string()),
+            reasoning_budget_tokens: Some(256),
+            top_p: Some(0.95),
+            top_k: Some(20),
+            normalize_response: Some(true),
+            extra_body: Some(serde_json::json!({ "demo": true })),
+            api_version: Some("2024-02-01".to_string()),
+            deployment_id: Some("deployment".to_string()),
+        };
+
+        let _builder = apply_common::<autoagents_llm::backends::openai::OpenAI>(config);
+    }
+
+    #[test]
     fn configured_autoagents_providers_build_without_network() {
         let cases = [
             ProviderConfig {

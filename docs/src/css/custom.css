@@ -54,7 +54,7 @@ html[data-theme='dark'] {
   box-shadow: var(--ifm-navbar-shadow);
 }
 
-/* Two-line navbar brand: "LiquidOS" + "Odyssey Platform" */
+/* Two-line navbar brand: "LiquidOS" + "FastLLM" */
 .navbar__brand {
   display: flex;
   align-items: center;
@@ -80,7 +80,7 @@ html[data-theme='dark'] {
 }
 
 .navbar__title::after {
-  content: 'Odyssey Platform';
+  content: 'FastLLM';
   display: block;
   margin-top: 4px;
   font-size: 11px;
@@ -106,8 +106,8 @@ html[data-theme='dark'] .navbar__title::after {
   border-radius: var(--ifm-global-radius);
 }
 
-.theme-doc-markdown > h2,
-.theme-doc-markdown > h3 {
+.theme-doc-markdown>h2,
+.theme-doc-markdown>h3 {
   scroll-margin-top: 5rem;
 }
 
@@ -115,7 +115,7 @@ html[data-theme='dark'] .navbar__title::after {
   border-top: 1px solid var(--ifm-toc-border-color);
 }
 
-article .markdown > h1:first-child {
+article .markdown>h1:first-child {
   font-size: 2rem;
 }
 

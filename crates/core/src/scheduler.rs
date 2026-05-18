@@ -173,4 +173,104 @@ mod tests {
             LlmGatewayError::DeadlineExceeded { request_id } if request_id == "deadline"
         ));
     }
+
+    #[tokio::test]
+    async fn scheduler_rejects_when_queue_is_full() {
+        let scheduler = ExecutionScheduler::new(
+            SchedulerConfig {
+                max_queue_depth: 0,
+                ..SchedulerConfig::default()
+            },
+            Telemetry::new(),
+        );
+        let request = LlmRequest::new(ModelRoute::new("p", "m"), Vec::new());
+
+        let err = scheduler
+            .execute(request, |_| async {
+                Ok(LlmResponse {
+                    text: String::new(),
+                    reasoning: None,
+                    tool_calls: Vec::new(),
+                    usage: None,
+                })
+            })
+            .await
+            .expect_err("queue full");
+
+        assert!(matches!(err, LlmGatewayError::QueueFull { capacity: 0 }));
+        assert_eq!(scheduler.queued(), 0);
+    }
+
+    #[tokio::test]
+    async fn scheduler_rejects_busy_route_and_releases_after_drop() {
+        let scheduler = ExecutionScheduler::new(
+            SchedulerConfig {
+                max_concurrent_tasks: 2,
+                per_route_concurrency: 1,
+                default_deadline_ms: 1_000,
+                ..SchedulerConfig::default()
+            },
+            Telemetry::new(),
+        );
+        let (entered_tx, entered_rx) = tokio::sync::oneshot::channel();
+        let (release_tx, release_rx) = tokio::sync::oneshot::channel::<()>();
+        let first_request = LlmRequest::new(ModelRoute::new("p", "m"), Vec::new());
+        let first_scheduler = scheduler.clone();
+        let first = tokio::spawn(async move {
+            first_scheduler
+                .execute(first_request, |_| async move {
+                    entered_tx.send(()).expect("notify entered");
+                    release_rx.await.expect("release");
+                    Ok(LlmResponse {
+                        text: "first".to_string(),
+                        reasoning: None,
+                        tool_calls: Vec::new(),
+                        usage: None,
+                    })
+                })
+                .await
+        });
+        entered_rx.await.expect("first entered route");
+
+        let busy = scheduler
+            .execute(
+                LlmRequest::new(ModelRoute::new("p", "m"), Vec::new()),
+                |_| async {
+                    Ok(LlmResponse {
+                        text: "second".to_string(),
+                        reasoning: None,
+                        tool_calls: Vec::new(),
+                        usage: None,
+                    })
+                },
+            )
+            .await
+            .expect_err("route busy");
+        assert!(matches!(
+            busy,
+            LlmGatewayError::RouteBusy { route, limit: 1 } if route == "p:m"
+        ));
+
+        release_tx.send(()).expect("release first");
+        assert_eq!(
+            first.await.expect("join").expect("first result").text,
+            "first"
+        );
+
+        let after_release = scheduler
+            .execute(
+                LlmRequest::new(ModelRoute::new("p", "m"), Vec::new()),
+                |_| async {
+                    Ok(LlmResponse {
+                        text: "after".to_string(),
+                        reasoning: None,
+                        tool_calls: Vec::new(),
+                        usage: None,
+                    })
+                },
+            )
+            .await
+            .expect("route released");
+        assert_eq!(after_release.text, "after");
+    }
 }

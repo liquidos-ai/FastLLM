@@ -186,3 +186,36 @@ pub enum ModelLoadReason {
     Retry,
     MemoryPressure,
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn request_builder_sets_optional_scheduler_fields() {
+        let request = LlmRequest::new(
+            ModelRoute::new("openai", "gpt"),
+            vec![LlmMessage::user("hello")],
+        )
+        .with_request_id("req-1")
+        .with_deadline_ms(500)
+        .with_priority(7);
+
+        assert_eq!(request.route.key(), "openai:gpt");
+        assert_eq!(request.request_id.as_deref(), Some("req-1"));
+        assert_eq!(request.deadline_ms, Some(500));
+        assert_eq!(request.priority, 7);
+        assert!(request.cache);
+    }
+
+    #[test]
+    fn unloaded_model_info_uses_explicit_defaults() {
+        let info = ModelInfo::unloaded(ModelRoute::new("local", "model"));
+
+        assert!(!info.loaded);
+        assert_eq!(info.state, ModelState::Unloaded);
+        assert_eq!(info.memory_bytes, 0);
+        assert_eq!(info.kv_cache_bytes, 0);
+        assert_eq!(info.load_reason, ModelLoadReason::Explicit);
+    }
+}

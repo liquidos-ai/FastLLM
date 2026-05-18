@@ -169,4 +169,62 @@ mod tests {
 
         assert!(cache.get(&request).is_none());
     }
+
+    #[test]
+    fn cache_respects_zero_ttl_and_global_disable() {
+        let request = LlmRequest::new(ModelRoute::new("p", "m"), vec![LlmMessage::user("hello")]);
+        let response = LlmResponse {
+            text: "value".to_string(),
+            reasoning: None,
+            tool_calls: Vec::new(),
+            usage: None,
+        };
+
+        let zero_ttl = PromptCache::new(CacheConfig {
+            ttl_seconds: 0,
+            ..CacheConfig::default()
+        });
+        zero_ttl.insert(&request, response.clone());
+        assert!(zero_ttl.is_empty());
+
+        let disabled = PromptCache::new(CacheConfig {
+            enabled: false,
+            ..CacheConfig::default()
+        });
+        disabled.insert(&request, response);
+        assert!(disabled.get(&request).is_none());
+    }
+
+    #[test]
+    fn cache_evicts_oldest_entry_when_full() {
+        let cache = PromptCache::new(CacheConfig {
+            max_entries: 1,
+            ..CacheConfig::default()
+        });
+        let first = LlmRequest::new(ModelRoute::new("p", "a"), Vec::new());
+        let second = LlmRequest::new(ModelRoute::new("p", "b"), Vec::new());
+
+        cache.insert(
+            &first,
+            LlmResponse {
+                text: "first".to_string(),
+                reasoning: None,
+                tool_calls: Vec::new(),
+                usage: None,
+            },
+        );
+        cache.insert(
+            &second,
+            LlmResponse {
+                text: "second".to_string(),
+                reasoning: None,
+                tool_calls: Vec::new(),
+                usage: None,
+            },
+        );
+
+        assert_eq!(cache.len(), 1);
+        assert!(cache.get(&first).is_none());
+        assert_eq!(cache.get(&second).expect("second remains").text, "second");
+    }
 }

@@ -52,7 +52,7 @@ jobs:
       - name: Build Docusaurus site
         working-directory: docs
         env:
-          DOCUSAURUS_BASE_URL: /Odyssey/
+          DOCUSAURUS_BASE_URL: /FastLLM/
         run: npm run build
 
       - name: Upload artifact

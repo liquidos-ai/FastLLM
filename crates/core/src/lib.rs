@@ -1,5 +1,3 @@
-//! LLM routing and model loading contracts for Odyssey.
-
 mod autoagents;
 mod cache;
 mod config;

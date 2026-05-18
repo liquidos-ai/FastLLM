@@ -394,11 +394,50 @@ fn now_ms() -> u64 {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{CacheConfig, EchoProvider, LlmMessage, RuntimeKind};
+    use crate::{
+        CacheConfig, EchoProvider, LlmMessage, LlmToolCall, RuntimeKind, runtime::InferenceRuntime,
+    };
+    use async_trait::async_trait;
+
+    struct FakeRuntime;
+
+    #[async_trait]
+    impl InferenceRuntime for FakeRuntime {
+        async fn chat(&self, request: LlmRequest) -> Result<LlmResponse, LlmGatewayError> {
+            Ok(LlmResponse {
+                text: format!("runtime:{}", request.route.key()),
+                reasoning: None,
+                tool_calls: Vec::new(),
+                usage: None,
+            })
+        }
+
+        async fn load_model(
+            &self,
+            request: ModelLoadRequest,
+        ) -> Result<ModelInfo, LlmGatewayError> {
+            Ok(ModelInfo {
+                route: request.route,
+                loaded: true,
+                state: ModelState::Loaded,
+                memory_bytes: 42,
+                kv_cache_bytes: 7,
+                device: Some("fake".to_string()),
+                expires_at_ms: Some(100),
+                load_reason: ModelLoadReason::Explicit,
+            })
+        }
+
+        async fn unload_model(&self, _route: &ModelRoute) -> Result<(), LlmGatewayError> {
+            Ok(())
+        }
+    }
 
     #[tokio::test]
     async fn gateway_routes_to_registered_provider() {
         let gateway = LlmGateway::new().with_provider("echo", Arc::new(EchoProvider));
+        assert_eq!(gateway.providers(), vec!["echo".to_string()]);
+        assert!(gateway.provider_handle("echo").is_ok());
         let response = gateway
             .chat(LlmRequest::new(
                 ModelRoute::new("echo", "test"),
@@ -439,6 +478,24 @@ mod tests {
             LlmStreamEvent::TextDelta { text } if text == "hello"
         ));
         assert!(matches!(events.last(), Some(LlmStreamEvent::Done { .. })));
+    }
+
+    #[test]
+    fn response_to_events_includes_reasoning_and_tool_calls() {
+        let events = response_to_events(LlmResponse {
+            text: "text".to_string(),
+            reasoning: Some("reason".to_string()),
+            tool_calls: vec![LlmToolCall {
+                name: "tool".to_string(),
+                arguments: serde_json::json!({ "ok": true }),
+            }],
+            usage: None,
+        });
+
+        assert!(matches!(&events[0], LlmStreamEvent::TextDelta { text } if text == "text"));
+        assert!(matches!(&events[1], LlmStreamEvent::ReasoningDelta { text } if text == "reason"));
+        assert!(matches!(&events[2], LlmStreamEvent::ToolCall { call } if call.name == "tool"));
+        assert!(matches!(events[3], LlmStreamEvent::Done { .. }));
     }
 
     #[tokio::test]
@@ -493,5 +550,75 @@ mod tests {
 
         assert!(info.loaded);
         assert_eq!(info.memory_bytes, 1_000);
+    }
+
+    #[tokio::test]
+    async fn gateway_loads_registered_provider_model_metadata() {
+        let gateway = LlmGateway::new().with_provider("echo", Arc::new(EchoProvider));
+
+        let info = gateway
+            .load_model(ModelLoadRequest {
+                route: ModelRoute::new("echo", "model"),
+                config: BTreeMap::new(),
+            })
+            .await
+            .expect("provider load metadata");
+
+        assert!(info.loaded);
+        assert_eq!(info.state, ModelState::Loaded);
+        assert_eq!(info.memory_bytes, 0);
+    }
+
+    #[tokio::test]
+    async fn gateway_uses_registered_runtime_for_load_and_chat() {
+        let gateway = LlmGateway::new();
+        let route = ModelRoute::new("runtime", "fake");
+        gateway.register_runtime(route.clone(), Arc::new(FakeRuntime));
+
+        let info = gateway
+            .load_model(ModelLoadRequest {
+                route: route.clone(),
+                config: BTreeMap::new(),
+            })
+            .await
+            .expect("runtime load");
+        let response = gateway
+            .chat(LlmRequest::new(route.clone(), Vec::new()))
+            .await
+            .expect("runtime chat");
+
+        assert_eq!(info.device.as_deref(), Some("fake"));
+        assert_eq!(response.text, "runtime:runtime:fake");
+        assert_eq!(gateway.telemetry().snapshot().model_loads, 1);
+    }
+
+    #[test]
+    fn gateway_builder_exposes_config() {
+        let gateway = LlmGateway::builder()
+            .config(GatewayConfig {
+                local_memory_budget_bytes: 123,
+                ..GatewayConfig::default()
+            })
+            .build();
+
+        assert_eq!(gateway.config().local_memory_budget_bytes, 123);
+    }
+
+    #[test]
+    fn tool_and_message_conversion_cover_roles() {
+        for role in ["system", "assistant", "tool", "user", "other"] {
+            let message = to_autoagents_message(&crate::LlmMessage {
+                role: role.to_string(),
+                content: "content".to_string(),
+            });
+            assert_eq!(message.content, "content");
+        }
+
+        let tool = to_autoagents_tool(&crate::LlmTool {
+            name: "lookup".to_string(),
+            description: "Lookup value".to_string(),
+            input_schema: serde_json::json!({ "type": "object" }),
+        });
+        assert_eq!(tool.function.name, "lookup");
     }
 }
