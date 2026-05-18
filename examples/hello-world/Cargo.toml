@@ -6,5 +6,5 @@ license.workspace = true
 repository.workspace = true
 
 [dependencies]
-fastllm-core.workspace = true
+fastllm.workspace = true
 tokio.workspace = true

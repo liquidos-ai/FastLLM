@@ -1,4 +1,4 @@
-use fastllm_core::{AutoagentsProviderConfig, LlmGateway, LlmMessage, LlmRequest, ModelRoute};
+use fastllm::{AutoagentsProviderConfig, LlmGateway, LlmMessage, LlmRequest, ModelRoute};
 use std::collections::BTreeMap;
 
 #[tokio::main]

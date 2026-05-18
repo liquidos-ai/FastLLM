@@ -8,7 +8,8 @@ The current workspace is intentionally compact:
 
 | Path | Purpose |
 | --- | --- |
-| `crates/core` | Core gateway library exposed as `fastllm-core` |
+| `crates/fastllm` | Public SDK facade exposed as `fastllm` |
+| `crates/core` | Core gateway implementation exposed as `fastllm-core` |
 | `examples/hello-world` | Minimal OpenAI chat example |
 
 ## Quick Start

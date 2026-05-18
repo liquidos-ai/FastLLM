@@ -341,6 +341,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "fastllm"
+version = "0.0.1"
+dependencies = [
+ "fastllm-core",
+]
+
+[[package]]
 name = "fastllm-core"
 version = "0.0.1"
 dependencies = [
@@ -356,7 +363,7 @@ dependencies = [
 name = "fastllm-example-hello-world"
 version = "0.0.1"
 dependencies = [
- "fastllm-core",
+ "fastllm",
  "tokio",
 ]
 
