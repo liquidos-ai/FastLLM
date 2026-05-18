@@ -8,7 +8,6 @@
 [![Crates.io](https://img.shields.io/crates/v/fastllm.svg)](https://crates.io/crates/fastllm)
 [![Documentation](https://docs.rs/fastllm/badge.svg)](https://liquidos-ai.github.io/FastLLM)
 [![License](https://img.shields.io/crates/l/fastllm.svg)](https://github.com/liquidos-ai/FastLLM#license)
-[![Build Status](https://github.com/liquidos-ai/FastLLM/workflows/coverage/badge.svg)](https://github.com/liquidos-ai/FastLLM/actions)
 [![codecov](https://codecov.io/gh/liquidos-ai/FastLLM/graph/badge.svg)](https://codecov.io/gh/liquidos-ai/FastLLM)
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/liquidos-ai/FastLLM)
 
