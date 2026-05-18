@@ -1,4 +1,22 @@
-# FastLLM
+<div align="center">
+  <img src="assets/logo.png" alt="LiquidOS Logo" width="200" height="200">
+
+# FastLLM 
+
+**A Unified LLM Gateway with local Models in Rust**
+
+[![Crates.io](https://img.shields.io/crates/v/fastllm.svg)](https://crates.io/crates/fastllm)
+[![Documentation](https://docs.rs/fastllm/badge.svg)](https://liquidos-ai.github.io/FastLLM)
+[![License](https://img.shields.io/crates/l/fastllm.svg)](https://github.com/liquidos-ai/FastLLM#license)
+[![Build Status](https://github.com/liquidos-ai/FastLLM/workflows/coverage/badge.svg)](https://github.com/liquidos-ai/FastLLM/actions)
+[![codecov](https://codecov.io/gh/liquidos-ai/FastLLM/graph/badge.svg)](https://codecov.io/gh/liquidos-ai/FastLLM)
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/liquidos-ai/FastLLM)
+
+<br />
+<strong>Like this project?</strong> <a href="https://github.com/liquidos-ai/AutoAgents">Star us on GitHub</a>
+</div>
+
+---
 
 FastLLM is a Rust workspace for routing LLM requests through a unified
 gateway API. It provides typed routing contracts, provider registration,
@@ -165,3 +183,28 @@ Format and check before sending changes:
 cargo fmt --all --check
 cargo check
 ```
+
+## License
+
+AutoAgents is dual-licensed under:
+
+- **MIT License** ([MIT_LICENSE](MIT_LICENSE))
+- **Apache License 2.0** ([APACHE_LICENSE](APACHE_LICENSE))
+
+You may choose either license for your use case.
+
+---
+
+## Acknowledgments
+
+Built by the [Liquidos AI](https://liquidos.ai) team and wonderful community of researchers and engineers.
+
+<a href="https://github.com/liquidos-ai/FastLLM/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=liquidos-ai/FastLLM" />
+</a>
+
+Special thanks to:
+
+- The Rust community for the excellent ecosystem
+- LLM providers for enabling high-quality model APIs
+- All contributors who help improve AutoAgents
