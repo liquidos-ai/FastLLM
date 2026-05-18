@@ -1,0 +1,16 @@
+[default]
+engine = "Llvm"
+workspace = true
+timeout = "120s"
+out = ["Xml", "Html"]
+ignore-panics = true
+fail-under = 90.0
+
+# Keep the gate focused on Odyssey source code. Reference projects, build output,
+# examples, and prebuilt/demo bundle entrypoints are not part of this repo's
+# production coverage target.
+exclude-files = [
+  "reference/*",
+  "target/*",
+  "examples/*",
+]

@@ -1,0 +1,48 @@
+[workspace]
+resolver = "2"
+members = [
+    "crates/*",
+    "examples/*",
+]
+
+default-members = ["crates/core"]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+license = "Apache-2.0"
+description = "Unified LLM Gateway with Local Models in Rust"
+repository = "https://github.com/liquidos-ai/FastLLM"
+keywords = ["agents", "runtime", "bundles", "LLM"]
+categories = []
+readme = "README.md"
+
+[workspace.dependencies]
+fastllm-core = { path = "crates/core", version = "0.1.0" }
+
+autoagents-llm = { git = "https://github.com/liquidos-ai/AutoAgents" }
+autoagents-protocol = { git = "https://github.com/liquidos-ai/AutoAgents" }
+autoagents-llamacpp =  { git = "https://github.com/liquidos-ai/AutoAgents" }
+
+async-trait = "0.1.89"
+futures = "0.3.32"
+log = "0.4.29"
+serde = { version = "1.0.228", features = ["derive"] }
+serde_json = "1.0.149"
+serde_yaml = "0.9.34"
+thiserror = "2.0.18"
+tokio = { version = "1.50.0", features = ["full"] }
+tokio-stream = { version = "0.1.18", features = ["sync"] }
+env_logger = "0.11.9"
+
+[profile.release]
+lto = "thin"      # Enable link-time optimization
+codegen-units = 1 # Better optimization (slower compile)
+
+# Separate profile for profiling (keeps release fast)
+[profile.profiling]
+inherits = "release"
+debug = true         # Full debug info for symbols
+
+[profile.bench]
+debug = true
