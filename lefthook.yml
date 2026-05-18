@@ -6,10 +6,10 @@ pre-commit:
       stage_fixed: true
 
     clippy:
-      run: cargo clippy --workspace --all-features --all-targets -- -D warnings
+      run: cargo clippy --workspace --all-targets -- -D warnings
 
     test:
-      run: cargo test --workspace --all-features --all-targets
+      run: cargo test --workspace --all-targets
 
     check:
-      run: cargo check --workspace --all-features --all-targets
+      run: cargo check --workspace --all-targets

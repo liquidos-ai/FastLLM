@@ -9,5 +9,12 @@ keywords.workspace = true
 categories.workspace = true
 readme.workspace = true
 
+[features]
+local = ["fastllm-core/local"]
+cuda = ["fastllm-core/cuda"]
+metal = ["fastllm-core/metal"]
+cuda-no-vmm = ["fastllm-core/cuda-no-vmm"]
+vulkan = ["fastllm-core/vulkan"]
+
 [dependencies]
 fastllm-core.workspace = true

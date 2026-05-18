@@ -9,9 +9,18 @@ keywords.workspace = true
 categories.workspace = true
 readme.workspace = true
 
+[features]
+local = ["dep:autoagents-llamacpp"]
+cuda = ["local", "autoagents-llamacpp/cuda"]
+metal = ["local", "autoagents-llamacpp/metal"]
+cuda-no-vmm = ["local", "autoagents-llamacpp/cuda-no-vmm"]
+vulkan = ["local", "autoagents-llamacpp/vulkan"]
+
 [dependencies]
 async-trait.workspace = true
 autoagents-llm = { workspace = true, features = ["full"] }
+autoagents-llamacpp = { workspace = true , optional = true, features = ["mtmd"]}
+
 serde.workspace = true
 serde_json.workspace = true
 thiserror.workspace = true
